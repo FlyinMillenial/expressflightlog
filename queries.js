@@ -5,10 +5,29 @@ const pool = new Pool(
   dbConfig.pgConfig
 );
 
+
+const getCustomersQuery = `
+  SELECT 
+    c.first_name || ' ' || c.last_name as full_name,
+    a.address,
+    ci.city,
+    co.country
+  FROM 
+    customer c
+  INNER JOIN 
+    address a on c.address_id = a.address_id
+  INNER JOIN
+    city ci on a.city_id = ci.city_id
+  INNER JOIN 
+    country co on ci.country_id = co.country_id
+  WHERE 
+    c.first_name LIKE $1;
+`;
+
 const getCustomers = (request, response) => {
-    let query = request.query.firstNameContains;
-    console.log(query);
-    pool.query(`SELECT first_name || ' ' || last_name as full_name FROM customer WHERE first_name LIKE '%${query}%' ORDER BY last_name`, (error, results) => {
+    let requestQuery = `%${request.query.firstNameContains}%`;
+    
+    pool.query(getCustomersQuery, [requestQuery], (error, results) => {
       if (error) {
         throw error
       }
